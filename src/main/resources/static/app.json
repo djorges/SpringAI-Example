@@ -1,0 +1,41 @@
+
+{
+  "info": {
+    "name": "OpenAI Code API",
+    "description": "Endpoints para generar código usando Spring Boot y OpenAI",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Generate Code",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/openai/generate-code?prompt=Create%20a%20Java%20method%20that%20reverses%20a%20string",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "openai",
+            "generate-code"
+          ],
+          "query": [
+            {
+              "key": "prompt",
+              "value": "Create a Java method that reverses a string"
+            }
+          ]
+        }
+      },
+      "response": []
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080"
+    }
+  ]
+}
