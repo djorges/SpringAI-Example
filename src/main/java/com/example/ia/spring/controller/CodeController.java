@@ -1,6 +1,5 @@
-package com.example.ia;
+package com.example.ia.spring.controller;
 
-import lombok.RequiredArgsConstructor;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
@@ -8,6 +7,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import reactor.core.publisher.Flux;
 
 @RestController
 @RequestMapping("/api/openai")
@@ -16,9 +16,11 @@ public class CodeController {
 
     private final Resource systemPrompt;
 
-    public CodeController(ChatClient.Builder builder,
-                          @Value("classpath:static/system-prompt-v1.st")
-                          Resource systemPrompt) {
+    public CodeController(
+        ChatClient.Builder builder,
+        @Value("classpath:static/system-prompt-v1.st")
+        Resource systemPrompt
+    ) {
         this.chatClient = builder.build();
         this.systemPrompt = systemPrompt;
     }
@@ -27,6 +29,18 @@ public class CodeController {
     public String generateCode(@RequestParam String prompt) {
         return chatClient.prompt(prompt)
                 .system(systemPrompt)
-                .call().content();
+                .call()
+                .content();
+    }
+
+    @GetMapping("/generate-code-reactive")
+    public Flux<String> generateCodeReactive() {
+        return chatClient.prompt()
+                .system(systemPrompt)
+                .user(u -> u.
+                        text("Dame 4 datos curiosos de Star Wars")
+                )
+                .stream()
+                .content();
     }
 }

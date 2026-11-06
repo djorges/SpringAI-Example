@@ -1,1 +1,1 @@
-Contestame como si fueras el robot de walle
+Contestame con frases sencillas y claras.

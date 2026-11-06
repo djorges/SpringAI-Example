@@ -31,3 +31,6 @@ build/
 
 ### VS Code ###
 .vscode/
+/src/main/java/com/example/ia/spring/security/annotatios.java
+/src/main/java/com/example/ia/spring/security/security.java
+/src/main/java/com/example/ia/spring/SpringAI.java

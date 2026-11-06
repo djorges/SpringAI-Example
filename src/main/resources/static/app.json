@@ -30,6 +30,36 @@
         }
       },
       "response": []
+    },
+    {
+      "name": "Generate Code Reactive",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "text/event-stream"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/openai/generate-code-reactive?prompt=Dame%204%20datos%20curiosos%20de%20Star%20Wars",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "openai",
+            "generate-code-reactive"
+          ],
+          "query": [
+            {
+              "key": "prompt",
+              "value": "Dame 4 datos curiosos de Star Wars"
+            }
+          ]
+        }
+      },
+      "response": []
     }
   ],
   "variable": [
