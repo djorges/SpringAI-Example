@@ -1,5 +1,6 @@
 package com.example.ia.spring.controller;
 
+import com.example.ia.spring.model.MovieCuriosities;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
@@ -34,13 +35,20 @@ public class CodeController {
     }
 
     @GetMapping("/generate-code-reactive")
-    public Flux<String> generateCodeReactive() {
+    public Flux<String> generateCodeReactive(@RequestParam String prompt) {
+        return chatClient.prompt(prompt)
+                .system(systemPrompt)
+                .stream()
+                .content();
+    }
+    @GetMapping("/movies/generate-code-entity")
+    public MovieCuriosities generateCodeMovies() {
         return chatClient.prompt()
                 .system(systemPrompt)
                 .user(u -> u.
-                        text("Dame 4 datos curiosos de Star Wars")
+                    text("Dame 4 datos curiosos de Star Wars")
                 )
-                .stream()
-                .content();
+                .call()
+                .entity(MovieCuriosities.class);
     }
 }
