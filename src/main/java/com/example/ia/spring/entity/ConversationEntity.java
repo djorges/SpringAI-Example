@@ -1,4 +1,9 @@
+package com.example.ia.spring.entity;
 
+import jakarta.persistence.*;
+import lombok.*;
+
+import java.time.Instant;
 
 @Getter
 @Setter
