@@ -25,7 +25,7 @@ public class AIService {
     private final ChatClient ollamaChatClient;
     private final Resource systemPrompt;
     private final Executor aiExecutor;
-
+    private final AIHistoryService aiHistoryService;
     private static final Duration AI_TIMEOUT = Duration.ofSeconds(60);
 
     public AIService(
@@ -33,13 +33,16 @@ public class AIService {
             @Qualifier("openAIChatClient") ChatClient openAIChatClient,
             @Qualifier("ollamaChatClient") ChatClient ollamaChatClient,
             @Value("classpath:static/system-prompt-v1.st") Resource systemPrompt,
-            @Qualifier("aiExecutor") Executor aiExecutor) {
+            @Qualifier("aiExecutor") Executor aiExecutor,
+            AIHistoryService aiHistoryService
+    ) {
 
         this.anthropicChatClient = anthropicChatClient;
         this.openAIChatClient = openAIChatClient;
         this.ollamaChatClient = ollamaChatClient;
         this.systemPrompt = systemPrompt;
         this.aiExecutor = aiExecutor;
+        this.aiHistoryService = aiHistoryService;
     }
 
     public AIResponse generateResponses(String prompt) {
@@ -157,5 +160,20 @@ public class AIService {
         }
 
         return responses;
+    }
+
+    public AIResponse generateAndSave(
+        Long conversationId,
+        String prompt) {
+
+    AIResponse response = generateResponses(prompt);
+
+    aiHistoryService.saveExecution(
+            conversationId,
+            prompt,
+            response
+    );
+
+    return response;
     }
 }
