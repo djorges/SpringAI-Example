@@ -18,73 +18,57 @@ import java.util.stream.Stream;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class AIService {
 
+    @Qualifier("anthropicChatClient")
     private final ChatClient anthropicChatClient;
+
+    @Qualifier("openAIChatClient")
     private final ChatClient openAIChatClient;
+
+    @Qualifier("ollamaChatClient")
     private final ChatClient ollamaChatClient;
+
+    @Value("classpath:static/system-prompt-v1.st")
     private final Resource systemPrompt;
+
+    @Qualifier("aiExecutor")
     private final Executor aiExecutor;
+
     private final AIHistoryService aiHistoryService;
+
     private static final Duration AI_TIMEOUT = Duration.ofSeconds(60);
-
-    public AIService(
-            @Qualifier("anthropicChatClient") ChatClient anthropicChatClient,
-            @Qualifier("openAIChatClient") ChatClient openAIChatClient,
-            @Qualifier("ollamaChatClient") ChatClient ollamaChatClient,
-            @Value("classpath:static/system-prompt-v1.st") Resource systemPrompt,
-            @Qualifier("aiExecutor") Executor aiExecutor,
-            AIHistoryService aiHistoryService
-    ) {
-
-        this.anthropicChatClient = anthropicChatClient;
-        this.openAIChatClient = openAIChatClient;
-        this.ollamaChatClient = ollamaChatClient;
-        this.systemPrompt = systemPrompt;
-        this.aiExecutor = aiExecutor;
-        this.aiHistoryService = aiHistoryService;
-    }
+    private static final int MAX_PROMPT_LENGTH = 10000;
 
     public AIResponse generateResponses(String prompt) {
-
         validatePrompt(prompt);
 
-        CompletableFuture<String> anthropicFuture =
-                generateAsync(anthropicChatClient, prompt);
-
-        CompletableFuture<String> openAIFuture =
-                generateAsync(openAIChatClient, prompt);
-
-        CompletableFuture<String> ollamaFuture =
-                generateAsync(ollamaChatClient, prompt);
+        var anthropic = generateAsync(anthropicChatClient, prompt);
+        var openAI = generateAsync(openAIChatClient, prompt);
+        var ollama = generateAsync(ollamaChatClient, prompt);
 
         return AIResponse.builder()
-                .anthropic(getResult(anthropicFuture))
-                .openAI(getResult(openAIFuture))
-                .ollama(getResult(ollamaFuture))
+                .anthropic(getResult(anthropic))
+                .openAI(getResult(openAI))
+                .ollama(getResult(ollama))
                 .build();
     }
 
-    // 1. Ejecutar proveedor de forma asincrónica
     private CompletableFuture<String> generateAsync(
             ChatClient client,
-            String prompt) {
-
-        return CompletableFuture.supplyAsync(
-                () -> generateSingleResponse(client, prompt),
-                aiExecutor
-        ).orTimeout(AI_TIMEOUT.toSeconds(), TimeUnit.SECONDS)
-         .exceptionally(ex -> {
-             log.error("Error generating AI response: {}", ex.getMessage());
-             return null;
-         });
+            String prompt
+    ) {
+        return CompletableFuture
+                .supplyAsync(() -> generateSingleResponse(client, prompt), aiExecutor)
+                .orTimeout(AI_TIMEOUT.toSeconds(), TimeUnit.SECONDS)
+                .exceptionally(ex -> {
+                    log.error("AI provider timeout or failure", ex);
+                    return null;
+                });
     }
 
-    // 2. Generar respuesta individual
-    public String generateSingleResponse(
-            ChatClient client,
-            String prompt) {
-
+    public String generateSingleResponse(ChatClient client, String prompt) {
         try {
             String response = client.prompt()
                     .system(systemPrompt)
@@ -95,14 +79,12 @@ public class AIService {
             return validateResponse(response) ? response : null;
 
         } catch (Exception e) {
-            log.error("AI provider failed: {}", e.getMessage());
+            log.error("AI provider failed", e);
             return null;
         }
     }
 
-    // 3. Obtener resultado sin interrumpir las demás respuestas
     private String getResult(CompletableFuture<String> future) {
-
         try {
             return future.join();
         } catch (CompletionException e) {
@@ -111,29 +93,22 @@ public class AIService {
         }
     }
 
-    // 4. Validar prompt
     public void validatePrompt(String prompt) {
-
         if (prompt == null || prompt.isBlank()) {
-            throw new IllegalArgumentException(
-                    "Prompt cannot be empty"
-            );
+            throw new IllegalArgumentException("Prompt cannot be empty");
         }
 
-        if (prompt.length() > 10000) {
-            throw new IllegalArgumentException(
-                    "Prompt exceeds maximum length"
-            );
+        if (prompt.length() > MAX_PROMPT_LENGTH) {
+            throw new IllegalArgumentException("Prompt exceeds maximum length");
         }
     }
 
-    // 5. Validar respuesta
     public boolean validateResponse(String response) {
         return response != null && !response.isBlank();
     }
 
-    // 6. Contar respuestas exitosas
     public int countSuccessfulResponses(AIResponse response) {
+        Objects.requireNonNull(response, "AIResponse cannot be null");
 
         return (int) Stream.of(
                 response.getAnthropic(),
@@ -142,8 +117,8 @@ public class AIService {
         ).filter(this::validateResponse).count();
     }
 
-    // 7. Obtener respuestas disponibles
     public Map<String, String> getAvailableResponses(AIResponse response) {
+        Objects.requireNonNull(response, "AIResponse cannot be null");
 
         Map<String, String> responses = new LinkedHashMap<>();
 
@@ -162,18 +137,13 @@ public class AIService {
         return responses;
     }
 
-    public AIResponse generateAndSave(
-        Long conversationId,
-        String prompt) {
+    public AIResponse generateAndSave(Long conversationId, String prompt) {
+        validatePrompt(prompt);
 
-    AIResponse response = generateResponses(prompt);
+        AIResponse response = generateResponses(prompt);
 
-    aiHistoryService.saveExecution(
-            conversationId,
-            prompt,
-            response
-    );
+        aiHistoryService.saveExecution(conversationId, prompt, response);
 
-    return response;
+        return response;
     }
 }
