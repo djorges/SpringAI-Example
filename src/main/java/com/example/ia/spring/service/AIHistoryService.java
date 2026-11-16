@@ -1,3 +1,22 @@
+package com.example.ia.spring.service;
+
+import com.example.ia.spring.entity.AIResponseEntity;
+import com.example.ia.spring.entity.ConversationEntity;
+import com.example.ia.spring.entity.MessageEntity;
+import com.example.ia.spring.entity.enums.AIProvider;
+import com.example.ia.spring.entity.enums.MessageRole;
+import com.example.ia.spring.entity.enums.ResponseStatus;
+import com.example.ia.spring.model.AIResponse;
+import com.example.ia.spring.repository.AIResponseRepository;
+import com.example.ia.spring.repository.ConversationRepository;
+import com.example.ia.spring.repository.MessageRepository;
+import jakarta.persistence.EntityNotFoundException;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Slf4j
 @Service

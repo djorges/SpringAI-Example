@@ -1,5 +1,6 @@
 package com.example.ia.spring.entity;
 
+import com.example.ia.spring.entity.enums.MessageRole;
 import jakarta.persistence.*;
 import lombok.*;
 

@@ -9,7 +9,6 @@ import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executor;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.*;
@@ -18,28 +17,32 @@ import java.util.stream.Stream;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class AIService {
-
-    @Qualifier("anthropicChatClient")
-    private final ChatClient anthropicChatClient;
-
-    @Qualifier("openAIChatClient")
-    private final ChatClient openAIChatClient;
-
-    @Qualifier("ollamaChatClient")
-    private final ChatClient ollamaChatClient;
-
-    @Value("classpath:static/system-prompt-v1.st")
-    private final Resource systemPrompt;
-
-    @Qualifier("aiExecutor")
-    private final Executor aiExecutor;
-
-    private final AIHistoryService aiHistoryService;
-
     private static final Duration AI_TIMEOUT = Duration.ofSeconds(60);
     private static final int MAX_PROMPT_LENGTH = 10000;
+
+    private final AIHistoryService aiHistoryService;
+    private final ChatClient anthropicChatClient;
+    private final ChatClient openAIChatClient;
+    private final ChatClient ollamaChatClient;
+    private final Resource systemPrompt;
+    private final Executor aiExecutor;
+
+    public AIService(
+            @Qualifier("anthropicChatClient") ChatClient anthropicChatClient,
+            @Qualifier("openAIChatClient") ChatClient openAIChatClient,
+            @Qualifier("ollamaChatClient") ChatClient ollamaChatClient,
+            @Value("classpath:static/system-prompt-v1.st") Resource systemPrompt,
+            @Qualifier("aiExecutor") Executor aiExecutor,
+            AIHistoryService historyService
+    ) {
+        this.anthropicChatClient = anthropicChatClient;
+        this.openAIChatClient = openAIChatClient;
+        this.ollamaChatClient = ollamaChatClient;
+        this.systemPrompt = systemPrompt;
+        this.aiHistoryService = historyService;
+        this.aiExecutor = aiExecutor;
+    }
 
     public AIResponse generateResponses(String prompt) {
         validatePrompt(prompt);

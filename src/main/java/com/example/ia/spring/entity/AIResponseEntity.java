@@ -1,3 +1,12 @@
+package com.example.ia.spring.entity;
+
+import com.example.ia.spring.entity.enums.AIProvider;
+import com.example.ia.spring.entity.enums.ResponseStatus;
+import jakarta.persistence.*;
+import lombok.*;
+
+import java.time.Instant;
+
 @Getter
 @Setter
 @Entity
