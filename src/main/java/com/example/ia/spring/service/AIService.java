@@ -21,7 +21,6 @@ public class AIService {
     private static final Duration AI_TIMEOUT = Duration.ofSeconds(60);
     private static final int MAX_PROMPT_LENGTH = 10000;
 
-    private final AIHistoryService aiHistoryService;
     private final ChatClient anthropicChatClient;
     private final ChatClient openAIChatClient;
     private final ChatClient ollamaChatClient;
@@ -44,6 +43,21 @@ public class AIService {
         this.aiExecutor = aiExecutor;
     }
 
+public String generateSingleResponse(
+        AIProvider provider,
+        String prompt
+) {
+    validatePrompt(prompt);
+
+    ChatClient client = switch (provider) {
+        case ANTHROPIC -> anthropicChatClient;
+        case OPENAI -> openAIChatClient;
+        case OLLAMA -> ollamaChatClient;
+    };
+
+    return generateSingleResponse(client, prompt);
+}
+    
     public AIResponse generateResponses(String prompt) {
         validatePrompt(prompt);
 
@@ -69,6 +83,7 @@ public class AIService {
                     log.error("AI provider timeout or failure", ex);
                     return null;
                 });
+
     }
 
     public String generateSingleResponse(ChatClient client, String prompt) {
@@ -138,15 +153,5 @@ public class AIService {
         }
 
         return responses;
-    }
-
-    public AIResponse generateAndSave(Long conversationId, String prompt) {
-        validatePrompt(prompt);
-
-        AIResponse response = generateResponses(prompt);
-
-        aiHistoryService.saveExecution(conversationId, prompt, response);
-
-        return response;
     }
 }
