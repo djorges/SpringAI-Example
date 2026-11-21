@@ -18,6 +18,10 @@ import java.util.stream.Stream;
 @Slf4j
 @Service
 public class AIService {
+    private static final int MAX_RETRIES = 3;
+    private static final int MAX_PROMPT_PREVIEW = 2000;
+    private static final Pattern CONTROL_CHARACTERS =
+        Pattern.compile("[\\p{Cntrl}&&[^\\r\\n\\t]]");
     private static final Duration AI_TIMEOUT = Duration.ofSeconds(60);
     private static final int MAX_PROMPT_LENGTH = 10000;
 
@@ -43,6 +47,16 @@ public class AIService {
         this.aiExecutor = aiExecutor;
     }
 
+
+    private Map<AIProvider, ChatClient> getProviders() {
+    return Map.of(
+            AIProvider.ANTHROPIC, anthropicChatClient,
+            AIProvider.OPENAI, openAIChatClient,
+            AIProvider.OLLAMA, ollamaChatClient
+    );
+}
+
+    
 public String generateSingleResponse(
         AIProvider provider,
         String prompt
