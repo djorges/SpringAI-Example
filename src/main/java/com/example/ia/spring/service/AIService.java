@@ -13,7 +13,9 @@ import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.Stream;
-
+import java.util.concurrent.*;
+import java.util.function.Supplier;
+import java.util.regex.Pattern;
 
 @Slf4j
 @Service
@@ -56,6 +58,45 @@ public class AIService {
     );
 }
 
+    public String generateWithFallback(
+        AIProvider primary,
+        String prompt
+) {
+    validatePrompt(prompt);
+    Objects.requireNonNull(primary);
+
+    List<AIProvider> providers = new ArrayList<>(
+            List.of(AIProvider.values())
+    );
+
+    providers.remove(primary);
+    providers.add(0, primary);
+
+    for (AIProvider provider : providers) {
+        String response = generateSingleResponse(provider, prompt);
+
+        if (validateResponse(response)) {
+            log.info("Response generated using {}", provider);
+            return response;
+        }
+    }
+
+    return null;
+}
+
+    public String generateBestResponse(
+        AIResponse response,
+        ToIntFunction<String> scorer
+) {
+    Objects.requireNonNull(response);
+    Objects.requireNonNull(scorer);
+
+    return getAvailableResponses(response)
+            .values()
+            .stream()
+            .max(Comparator.comparingInt(scorer))
+            .orElse(null);
+}
     
 public String generateSingleResponse(
         AIProvider provider,
