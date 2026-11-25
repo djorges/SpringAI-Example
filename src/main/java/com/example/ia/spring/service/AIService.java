@@ -97,7 +97,63 @@ public class AIService {
             .max(Comparator.comparingInt(scorer))
             .orElse(null);
 }
-    
+
+
+
+public String generateWithRetry(
+        AIProvider provider,
+        String prompt
+) {
+    validatePrompt(prompt);
+
+    ChatClient client = getProviders().get(
+            Objects.requireNonNull(provider)
+    );
+
+    for (int attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+        try {
+            String response = client.prompt()
+                    .system(systemPrompt)
+                    .user(prompt)
+                    .call()
+                    .content();
+
+            if (validateResponse(response)) {
+                return response;
+            }
+
+        } catch (Exception e) {
+            log.warn(
+                    "Attempt {}/{} failed for {}",
+                    attempt, MAX_RETRIES, provider, e
+            );
+        }
+    }
+
+    return null;
+}
+
+public AIResponse generateResponsesWithTimeout(
+        String prompt,
+        Duration timeout
+) {
+    validatePrompt(prompt);
+
+    if (timeout == null || timeout.isZero() || timeout.isNegative()) {
+        throw new IllegalArgumentException("Invalid timeout");
+    }
+
+    var anthropic = generateAsync(anthropicChatClient, prompt, timeout);
+    var openAI = generateAsync(openAIChatClient, prompt, timeout);
+    var ollama = generateAsync(ollamaChatClient, prompt, timeout);
+
+    return AIResponse.builder()
+            .anthropic(getResult(anthropic))
+            .openAI(getResult(openAI))
+            .ollama(getResult(ollama))
+            .build();
+}
+
 public String generateSingleResponse(
         AIProvider provider,
         String prompt
